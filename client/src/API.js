@@ -34,5 +34,24 @@ async function apiCall(path, method = "GET", body = undefined) {
 // --- Phase 0 smoke test ---
 const testConnection = () => apiCall("/test");
 
-const API = { testConnection };
+// --- Authentication (Phase 2) ---
+const login = (username, password) => apiCall("/sessions", "POST", { username, password });
+const logout = () => apiCall("/sessions/current", "DELETE");
+// Returns the user if a session exists; the caller treats a thrown 401 as "anonymous".
+const getCurrentUser = () => apiCall("/sessions/current");
+
+// --- Network & instructions (Phase 3) ---
+const getFullNetwork = () => apiCall("/network/full"); // Setup map (with lines)
+const getPlanningNetwork = () => apiCall("/network/planning"); // stations + segments only
+const getInstructions = () => apiCall("/instructions"); // public
+
+const API = {
+  testConnection,
+  login,
+  logout,
+  getCurrentUser,
+  getFullNetwork,
+  getPlanningNetwork,
+  getInstructions,
+};
 export default API;
