@@ -1,0 +1,19 @@
+# Local Claude Code context — not part of the submission
+CLAUDE.md
+.claude/
+
+# Local notes & understanding docs — not part of the submission
+local-notes/
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Env / local
+.env
+.env.local
+.DS_Store
+
+# Build output
+dist/
+build/
