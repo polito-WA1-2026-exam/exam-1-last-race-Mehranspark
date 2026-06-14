@@ -6,6 +6,7 @@ import session from "express-session";
 import passport from "./auth.js";
 import authRoutes from "./routes/authRoutes.js";
 import networkRoutes from "./routes/networkRoutes.js";
+import gameRoutes from "./routes/gameRoutes.js";
 
 // init express
 const app = new express();
@@ -49,6 +50,7 @@ app.get("/api/test", (req, res) => {
 
 app.use("/api/sessions", authRoutes);
 app.use("/api", networkRoutes);
+app.use("/api/games", gameRoutes);
 
 // activate the server
 app.listen(port, () => {

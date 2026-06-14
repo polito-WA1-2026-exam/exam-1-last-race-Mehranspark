@@ -45,6 +45,10 @@ const getFullNetwork = () => apiCall("/network/full"); // Setup map (with lines)
 const getPlanningNetwork = () => apiCall("/network/planning"); // stations + segments only
 const getInstructions = () => apiCall("/instructions"); // public
 
+// --- Game lifecycle (Phases 4 & 5) ---
+const createGame = () => apiCall("/games", "POST"); // server assigns start/dest
+const submitRoute = (gameId, segments) => apiCall(`/games/${gameId}/route`, "POST", { segments });
+
 const API = {
   testConnection,
   login,
@@ -53,5 +57,7 @@ const API = {
   getFullNetwork,
   getPlanningNetwork,
   getInstructions,
+  createGame,
+  submitRoute,
 };
 export default API;
