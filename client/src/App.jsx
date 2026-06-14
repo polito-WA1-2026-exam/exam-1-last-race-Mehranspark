@@ -1,42 +1,45 @@
-import { useState, useEffect } from 'react'
-import { Container, Alert, Spinner } from 'react-bootstrap'
-import API from './API.js'
+// Top-level app: wraps everything in the auth provider, renders the nav bar, and
+// declares the client-side routes (React Router). Navigation never reloads the page.
 
-// Phase 0 placeholder: confirms the client can reach the API across origins
-// (CORS + the "two servers" pattern). Replaced by the real app shell in Phase 7.
+import { Routes, Route, Navigate } from 'react-router-dom'
+import { Container } from 'react-bootstrap'
+import { AuthProvider } from './contexts/AuthContext.jsx'
+import NavHeader from './components/NavHeader.jsx'
+import ProtectedRoute from './components/ProtectedRoute.jsx'
+import HomePage from './pages/HomePage.jsx'
+import LoginPage from './pages/LoginPage.jsx'
+import GamePage from './pages/GamePage.jsx'
+import RankingPage from './pages/RankingPage.jsx'
+
 function App() {
-  const [status, setStatus] = useState({ state: 'loading' })
-
-  useEffect(() => {
-    // useEffect with an empty dependency array runs once after the first render.
-    API.testConnection()
-      .then((data) => setStatus({ state: 'ok', data }))
-      .catch((err) => setStatus({ state: 'error', message: err.message }))
-  }, [])
-
   return (
-    <Container className="py-5">
-      <h1>🚇 Last Race</h1>
-      <p className="text-muted">Web Applications I — Exam project</p>
-
-      {status.state === 'loading' && (
-        <div className="d-flex align-items-center gap-2">
-          <Spinner animation="border" size="sm" /> Contacting the API…
-        </div>
-      )}
-      {status.state === 'ok' && (
-        <Alert variant="success">
-          API reachable ✅ — <strong>{status.data.message}</strong>
-          <br />
-          <small>server time: {status.data.time}</small>
-        </Alert>
-      )}
-      {status.state === 'error' && (
-        <Alert variant="danger">
-          Could not reach the API: {status.message}
-        </Alert>
-      )}
-    </Container>
+    <AuthProvider>
+      <NavHeader />
+      <Container className="pb-5">
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route
+            path="/play"
+            element={
+              <ProtectedRoute>
+                <GamePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/ranking"
+            element={
+              <ProtectedRoute>
+                <RankingPage />
+              </ProtectedRoute>
+            }
+          />
+          {/* Any unknown path falls back to the home page. */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Container>
+    </AuthProvider>
   )
 }
 
