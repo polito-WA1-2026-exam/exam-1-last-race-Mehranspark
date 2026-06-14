@@ -7,6 +7,7 @@ import passport from "./auth.js";
 import authRoutes from "./routes/authRoutes.js";
 import networkRoutes from "./routes/networkRoutes.js";
 import gameRoutes from "./routes/gameRoutes.js";
+import rankingRoutes from "./routes/rankingRoutes.js";
 
 // init express
 const app = new express();
@@ -51,6 +52,7 @@ app.get("/api/test", (req, res) => {
 app.use("/api/sessions", authRoutes);
 app.use("/api", networkRoutes);
 app.use("/api/games", gameRoutes);
+app.use("/api/ranking", rankingRoutes);
 
 // activate the server
 app.listen(port, () => {

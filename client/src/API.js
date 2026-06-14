@@ -49,6 +49,9 @@ const getInstructions = () => apiCall("/instructions"); // public
 const createGame = () => apiCall("/games", "POST"); // server assigns start/dest
 const submitRoute = (gameId, segments) => apiCall(`/games/${gameId}/route`, "POST", { segments });
 
+// --- Ranking (Phase 6) ---
+const getRanking = () => apiCall("/ranking");
+
 const API = {
   testConnection,
   login,
@@ -59,5 +62,6 @@ const API = {
   getInstructions,
   createGame,
   submitRoute,
+  getRanking,
 };
 export default API;
