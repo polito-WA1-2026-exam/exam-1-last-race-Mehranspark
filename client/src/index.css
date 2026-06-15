@@ -43,20 +43,31 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* slow drifting aurora behind everything */
+/* slow drifting aurora behind everything (sits behind the particle canvas) */
 body::before {
   content: "";
   position: fixed;
   inset: -30%;
-  z-index: -1;
+  z-index: -2;
   background:
-    radial-gradient(closest-side, rgba(124, 92, 255, 0.18), transparent),
-    radial-gradient(closest-side, rgba(34, 211, 238, 0.14), transparent);
+    radial-gradient(closest-side, rgba(124, 92, 255, 0.14), transparent),
+    radial-gradient(closest-side, rgba(34, 211, 238, 0.12), transparent);
   background-size: 55% 55%, 45% 45%;
   background-position: 18% 25%, 80% 70%;
   background-repeat: no-repeat;
   filter: blur(20px);
   animation: drift 22s ease-in-out infinite alternate;
+}
+
+/* live "constellation" canvas background (ParticleNetwork) */
+.lr-bg-net {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
+  pointer-events: none;
+  display: block;
 }
 @keyframes drift {
   0%   { background-position: 12% 20%, 82% 72%; }

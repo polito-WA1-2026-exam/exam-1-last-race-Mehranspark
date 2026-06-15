@@ -4,6 +4,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { Container } from 'react-bootstrap'
 import { AuthProvider } from './contexts/AuthContext.jsx'
+import ParticleNetwork from './components/ParticleNetwork.jsx'
 import NavHeader from './components/NavHeader.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import HomePage from './pages/HomePage.jsx'
@@ -14,6 +15,7 @@ import RankingPage from './pages/RankingPage.jsx'
 function App() {
   return (
     <AuthProvider>
+      <ParticleNetwork />
       <NavHeader />
       <Container className="pb-5">
         <Routes>
