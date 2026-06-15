@@ -44,11 +44,6 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // --- routes ---
-// Smoke-test route: proves the client can reach the API across origins (CORS).
-app.get("/api/test", (req, res) => {
-  res.json({ message: "Last Race API is running", time: new Date().toISOString() });
-});
-
 app.use("/api/sessions", authRoutes);
 app.use("/api", networkRoutes);
 app.use("/api/games", gameRoutes);

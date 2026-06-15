@@ -31,9 +31,6 @@ async function apiCall(path, method = "GET", body = undefined) {
   return response.json();
 }
 
-// --- Phase 0 smoke test ---
-const testConnection = () => apiCall("/test");
-
 // --- Authentication (Phase 2) ---
 const login = (username, password) => apiCall("/sessions", "POST", { username, password });
 const logout = () => apiCall("/sessions/current", "DELETE");
@@ -53,7 +50,6 @@ const submitRoute = (gameId, segments) => apiCall(`/games/${gameId}/route`, "POS
 const getRanking = () => apiCall("/ranking");
 
 const API = {
-  testConnection,
   login,
   logout,
   getCurrentUser,
