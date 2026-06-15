@@ -17,3 +17,8 @@ npm-debug.log*
 # Build output
 dist/
 build/
+
+# SQLite transient sidecar files (the main .sqlite IS committed, these are not)
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
