@@ -1,0 +1,89 @@
+// Reusable SVG map of the underground network.
+//
+// Two modes (chosen by which prop you pass):
+//   • pass `lines`    -> "full" map: draws the coloured line paths + stations
+//                        (used in Setup).
+//   • pass `stations` -> "planning" map: draws ONLY the station nodes, no lines
+//                        (used in Planning — the lines must stay hidden).
+//
+// Optional highlighting: `startId`, `destId`, and `routeStationIds` (a Set/array
+// of stations currently on the built route). Pure SVG in JSX — no DOM access.
+
+import { useMemo } from "react";
+
+const VIEW_W = 820;
+const VIEW_H = 700;
+
+function NetworkMap({ lines, stations, startId, destId, routeStationIds = [] }) {
+  const routeSet = useMemo(() => new Set(routeStationIds), [routeStationIds]);
+
+  // Build the unique node list (+ interchange flag) from whichever input we got.
+  const nodes = useMemo(() => {
+    if (lines) {
+      const byId = new Map();
+      for (const line of lines) {
+        for (const s of line.stations) {
+          if (!byId.has(s.id)) byId.set(s.id, { id: s.id, name: s.name, x: s.x, y: s.y, lineCount: 0 });
+          byId.get(s.id).lineCount += 1;
+        }
+      }
+      return [...byId.values()];
+    }
+    return (stations ?? []).map((s) => ({ ...s, lineCount: 1 }));
+  }, [lines, stations]);
+
+  const nodeClass = (n) => {
+    if (n.id === startId) return "node-start";
+    if (n.id === destId) return "node-dest";
+    if (routeSet.has(n.id)) return "node-on-route";
+    return "";
+  };
+  const nodeFill = (n) => {
+    if (n.id === startId) return "var(--success)";
+    if (n.id === destId) return "var(--danger)";
+    if (routeSet.has(n.id)) return "var(--accent-2)";
+    return n.lineCount > 1 ? "#ffffff" : "#cfd6e6";
+  };
+
+  return (
+    <svg className="lr-map" viewBox={`0 0 ${VIEW_W} ${VIEW_H}`} role="img" aria-label="Network map">
+      {/* coloured line paths (full mode only) */}
+      {lines &&
+        lines.map((line, i) => (
+          <polyline
+            key={line.id}
+            className="line-path"
+            points={line.stations.map((s) => `${s.x},${s.y}`).join(" ")}
+            stroke={line.color}
+            strokeWidth="7"
+            style={{ animationDelay: `${i * 0.25}s` }}
+          />
+        ))}
+
+      {/* station nodes + labels */}
+      {nodes.map((n) => {
+        const highlighted = n.id === startId || n.id === destId || routeSet.has(n.id);
+        const r = n.id === startId || n.id === destId ? 11 : n.lineCount > 1 ? 9 : 6.5;
+        return (
+          <g key={n.id}>
+            <circle
+              className={`station-dot ${nodeClass(n)}`}
+              cx={n.x}
+              cy={n.y}
+              r={r}
+              fill={nodeFill(n)}
+              stroke="#0b1020"
+              strokeWidth="2.5"
+            />
+            <text className="station-label" x={n.x} y={n.y - 16} textAnchor="middle"
+              style={highlighted ? { fill: "#fff" } : undefined}>
+              {n.name}
+            </text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+export default NetworkMap;

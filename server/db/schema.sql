@@ -30,10 +30,13 @@ CREATE TABLE lines (
   color TEXT NOT NULL
 );
 
--- Stations. name is unique across the whole network.
+-- Stations. name is unique across the whole network. x/y give the station's
+-- position on the map drawing (part of the network layout, served by the API).
 CREATE TABLE stations (
   id   INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT NOT NULL UNIQUE
+  name TEXT NOT NULL UNIQUE,
+  x    INTEGER NOT NULL,
+  y    INTEGER NOT NULL
 );
 
 -- Ordered membership of a station on a line (position = order along the line).

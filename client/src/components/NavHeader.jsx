@@ -14,10 +14,11 @@ function NavHeader() {
   };
 
   return (
-    <Navbar bg="dark" variant="dark" expand="md" className="mb-4">
+    <Navbar variant="dark" expand="md" className="mb-4 lr-nav">
       <Container>
-        <Navbar.Brand as={Link} to="/">
-          🚇 Last Race
+        <Navbar.Brand as={Link} to="/" className="lr-brand">
+          <span className="lr-dot" />
+          Last Race
         </Navbar.Brand>
         <Nav className="me-auto">
           <Nav.Link as={Link} to="/">

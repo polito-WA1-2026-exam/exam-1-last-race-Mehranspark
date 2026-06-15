@@ -40,12 +40,11 @@ function LoginPage() {
   };
 
   return (
-    <Container style={{ maxWidth: 420 }}>
-      <Card className="shadow-sm">
+    <Container style={{ maxWidth: 420 }} className="pt-4">
+      <Card>
         <Card.Body>
-          <Card.Title as="h2" className="mb-3">
-            Login
-          </Card.Title>
+          <h2 className="mb-1">Welcome back</h2>
+          <p className="text-muted">Log in to play Last Race.</p>
           {error && <Alert variant="danger">{error}</Alert>}
           <Form onSubmit={handleSubmit}>
             <Form.Group className="mb-3" controlId="username">

@@ -7,9 +7,9 @@ export function listLines() {
   return dbAll("SELECT id, name, color FROM lines ORDER BY name");
 }
 
-// All stations (id + name). Used in Setup and Planning.
+// All stations (id + name + map position). Used in Setup and Planning.
 export function listStations() {
-  return dbAll("SELECT id, name FROM stations ORDER BY name");
+  return dbAll("SELECT id, name, x, y FROM stations ORDER BY name");
 }
 
 // Full topology for the Setup map: each line with its stations in order.
@@ -17,7 +17,8 @@ export function listStations() {
 export async function getFullNetwork() {
   const lines = await listLines();
   const rows = await dbAll(
-    `SELECT ls.line_id, ls.position, s.id AS station_id, s.name AS station_name
+    `SELECT ls.line_id, ls.position, s.id AS station_id, s.name AS station_name,
+            s.x AS x, s.y AS y
        FROM line_stations ls
        JOIN stations s ON s.id = ls.station_id
       ORDER BY ls.line_id, ls.position`
@@ -26,7 +27,7 @@ export async function getFullNetwork() {
     ...line,
     stations: rows
       .filter((r) => r.line_id === line.id)
-      .map((r) => ({ id: r.station_id, name: r.station_name, position: r.position })),
+      .map((r) => ({ id: r.station_id, name: r.station_name, position: r.position, x: r.x, y: r.y })),
   }));
 }
 

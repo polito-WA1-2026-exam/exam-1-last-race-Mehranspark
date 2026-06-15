@@ -53,7 +53,7 @@ segment by segment with random events affecting the coin score.
 
 - Table `users` — registered players; password stored as scrypt `salt` + `hash`.
 - Table `lines` — metro lines (unique name + colour).
-- Table `stations` — stations (unique name).
+- Table `stations` — stations (unique name + `x`,`y` map coordinates for drawing).
 - Table `line_stations` — ordered membership of a station on a line (`position`); the
   source of truth for topology. A station on >1 line is an interchange.
 - Table `segments` — undirected connection between two adjacent stations (canonical
@@ -75,6 +75,9 @@ segment by segment with random events affecting the coin score.
 - `PlanningPhase`: the 90-second timed route-builder (segment picker, no lines shown).
 - `ExecutionPhase`: replays the server's steps one at a time with the running score.
 - `ResultView`: the final score screen.
+- `NetworkMap` (SVG): draws the network — coloured lines + stations in Setup, or
+  stations only (no lines) in Planning, with start/destination/route highlighting.
+- `CircularTimer` (SVG): the animated 90-second countdown ring.
 
 ## Screenshots
 

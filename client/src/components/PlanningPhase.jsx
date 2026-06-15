@@ -1,13 +1,14 @@
 // Planning phase: the timed route-builder.
 //
-// The player sees the stations and the flat list of segments (pairs) — but NOT
-// the lines (the server doesn't send them). A 90-second countdown runs; when it
-// reaches zero the route built so far is auto-submitted. The player can also
-// submit earlier. Each segment may be selected only once, in sequence.
+// The player sees the stations positioned on the map (NO lines) and the flat list
+// of segments as chips. A 90-second ring counts down; at zero the route built so
+// far is auto-submitted. Each segment may be picked once, in sequence.
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { Card, Button, Alert, Spinner, Badge, Row, Col } from "react-bootstrap";
+import { Card, Button, Alert, Spinner, Row, Col } from "react-bootstrap";
 import API from "../API.js";
+import NetworkMap from "./NetworkMap.jsx";
+import CircularTimer from "./CircularTimer.jsx";
 
 function PlanningPhase({ game, onSubmitted }) {
   const [data, setData] = useState(null); // { stations, segments }
@@ -16,22 +17,18 @@ function PlanningPhase({ game, onSubmitted }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
-  // Refs that survive re-renders without causing them.
-  const submittedRef = useRef(false); // ensures we submit at most once
-  const selectedRef = useRef(selected); // latest selection for the auto-submit
+  const submittedRef = useRef(false); // submit at most once
+  const selectedRef = useRef(selected); // latest selection for the timer's auto-submit
   useEffect(() => {
     selectedRef.current = selected;
   }, [selected]);
 
-  // Load the planning view (stations + segments, no lines). GET → safe in effect.
   useEffect(() => {
     API.getPlanningNetwork()
       .then(setData)
       .catch((e) => setError(e.message));
   }, []);
 
-  // Submit the route (manual button or automatic at time-out). Guarded so it runs
-  // only once even if the timer and a click race each other.
   const handleSubmit = useCallback(async () => {
     if (submittedRef.current) return;
     submittedRef.current = true;
@@ -46,120 +43,131 @@ function PlanningPhase({ game, onSubmitted }) {
     }
   }, [game.id, onSubmitted]);
 
-  // The countdown: one interval for the whole phase, cleared on unmount.
+  // One interval for the whole phase; cleared on unmount.
   useEffect(() => {
     const id = setInterval(() => setTimeLeft((t) => (t > 0 ? t - 1 : 0)), 1000);
-    return () => clearInterval(id); // cleanup prevents leaks / double-ticking
+    return () => clearInterval(id);
   }, []);
 
-  // When the clock hits zero, auto-submit whatever has been built.
+  // Auto-submit when the clock hits zero.
   useEffect(() => {
     if (timeLeft === 0) handleSubmit();
   }, [timeLeft, handleSubmit]);
 
-  // Fast lookup of a segment by id.
   const segById = useMemo(
     () => new Map((data?.segments ?? []).map((s) => [s.id, s])),
     [data]
   );
 
-  // Reconstruct the station path from the selected segments (for display + hints).
+  // Reconstruct the directed walk from the selected segments (names + ids + state).
   const path = useMemo(() => {
-    if (!data) return { names: [], currentId: game.start.id, broken: false };
+    if (!data) return { names: [], ids: [game.start.id], currentId: game.start.id, broken: false };
     let currentId = game.start.id;
     const names = [game.start.name];
+    const ids = [game.start.id];
     let broken = false;
     for (const id of selected) {
       const seg = segById.get(id);
       if (!seg) { broken = true; break; }
-      if (seg.stationA.id === currentId) {
-        names.push(seg.stationB.name);
-        currentId = seg.stationB.id;
-      } else if (seg.stationB.id === currentId) {
-        names.push(seg.stationA.name);
-        currentId = seg.stationA.id;
-      } else {
-        broken = true;
-        break;
-      }
+      if (seg.stationA.id === currentId) { names.push(seg.stationB.name); currentId = seg.stationB.id; }
+      else if (seg.stationB.id === currentId) { names.push(seg.stationA.name); currentId = seg.stationA.id; }
+      else { broken = true; break; }
+      ids.push(currentId);
     }
-    return { names, currentId, broken };
+    return { names, ids, currentId, broken };
   }, [selected, segById, data, game.start]);
 
   const usedIds = useMemo(() => new Set(selected), [selected]);
   const reachedDest = !path.broken && path.currentId === game.dest.id;
 
-  const addSegment = (id) => {
-    if (!usedIds.has(id) && !submitting) setSelected((prev) => [...prev, id]);
-  };
-  const undo = () => setSelected((prev) => prev.slice(0, -1));
+  const addSegment = (id) => { if (!usedIds.has(id) && !submitting) setSelected((p) => [...p, id]); };
+  const undo = () => setSelected((p) => p.slice(0, -1));
   const clear = () => setSelected([]);
 
   if (error) return <Alert variant="danger">{error}</Alert>;
-  if (!data) return <Spinner animation="border" />;
-
-  const timeColor = timeLeft <= 15 ? "danger" : timeLeft <= 30 ? "warning" : "secondary";
+  if (!data) return <div className="text-center py-5"><Spinner animation="border" /></div>;
 
   return (
-    <Card className="shadow-sm">
+    <Card>
       <Card.Body>
-        {/* Header: assigned start/dest + countdown */}
-        <Row className="align-items-center mb-3">
+        <Row className="align-items-center g-3 mb-2">
           <Col>
-            <h2 className="mb-0">Planning</h2>
+            <h2 className="mb-1">Plan your route</h2>
             <div>
-              From <Badge bg="success">{game.start.name}</Badge> to{" "}
-              <Badge bg="danger">{game.dest.name}</Badge>
+              <span className="badge rounded-pill" style={{ background: "var(--success)", color: "#06281c" }}>
+                ● {game.start.name}
+              </span>
+              <span className="mx-2 text-muted">→</span>
+              <span className="badge rounded-pill" style={{ background: "var(--danger)", color: "#2a0d14" }}>
+                ◎ {game.dest.name}
+              </span>
             </div>
           </Col>
           <Col xs="auto">
-            <Badge bg={timeColor} style={{ fontSize: "1.25rem" }}>
-              ⏱ {timeLeft}s
-            </Badge>
+            <CircularTimer timeLeft={timeLeft} total={game.planningSeconds} />
           </Col>
         </Row>
 
-        {/* The route built so far */}
-        <Alert variant={reachedDest ? "success" : "light"} className="border">
-          <strong>Your route:</strong> {path.names.join(" → ")}
-          {path.broken && (
-            <div className="text-danger">
-              ⚠ This segment doesn't connect to your current station.
+        <Row className="g-3">
+          <Col lg={7}>
+            <NetworkMap
+              stations={data.stations}
+              startId={game.start.id}
+              destId={game.dest.id}
+              routeStationIds={path.ids}
+            />
+          </Col>
+          <Col lg={5}>
+            {/* the route being built */}
+            <div className="lr-panel p-3 mb-3">
+              <div className="text-muted small mb-1">Your route</div>
+              <div className="lr-route">
+                {path.names.map((n, i) => (
+                  <span key={i} style={{ display: "contents" }}>
+                    {i > 0 && <span className="arrow">→</span>}
+                    <span className="stop">{n}</span>
+                  </span>
+                ))}
+              </div>
+              {path.broken && (
+                <div className="mt-2" style={{ color: "var(--danger)" }}>
+                  ⚠ That segment doesn't connect here.
+                </div>
+              )}
+              {reachedDest && (
+                <div className="mt-2" style={{ color: "var(--success)" }}>
+                  ✓ Destination reached — submit when ready!
+                </div>
+              )}
             </div>
-          )}
-          {reachedDest && <div className="text-success">✓ You have reached the destination.</div>}
-        </Alert>
 
-        {/* Segment picker */}
-        <p className="text-muted mb-1">
-          Select segments in order (each can be used once). The lines are hidden — rebuild
-          them in your head.
-        </p>
-        <div className="d-flex flex-wrap gap-2 mb-3">
+            <div className="d-flex gap-2 mb-3">
+              <Button variant="primary" onClick={handleSubmit} disabled={submitting} className="flex-grow-1">
+                {submitting ? "Submitting…" : "🚆 Submit route"}
+              </Button>
+              <Button variant="outline-light" onClick={undo} disabled={submitting || !selected.length}>
+                Undo
+              </Button>
+              <Button variant="outline-light" onClick={clear} disabled={submitting || !selected.length}>
+                Clear
+              </Button>
+            </div>
+          </Col>
+        </Row>
+
+        <div className="text-muted small mt-2 mb-1">
+          Pick segments in order (each once). The lines are hidden — rebuild them from memory.
+        </div>
+        <div className="lr-chips">
           {data.segments.map((s) => (
-            <Button
+            <span
               key={s.id}
-              size="sm"
-              variant={usedIds.has(s.id) ? "secondary" : "outline-primary"}
-              disabled={usedIds.has(s.id) || submitting}
+              className={`lr-chip ${usedIds.has(s.id) ? "used" : ""}`}
               onClick={() => addSegment(s.id)}
             >
               {s.stationA.name} — {s.stationB.name}
-            </Button>
+            </span>
           ))}
-        </div>
-
-        {/* Actions */}
-        <div className="d-flex gap-2">
-          <Button variant="primary" onClick={handleSubmit} disabled={submitting}>
-            {submitting ? "Submitting…" : "Submit route"}
-          </Button>
-          <Button variant="outline-secondary" onClick={undo} disabled={submitting || !selected.length}>
-            Undo
-          </Button>
-          <Button variant="outline-secondary" onClick={clear} disabled={submitting || !selected.length}>
-            Clear
-          </Button>
         </div>
       </Card.Body>
     </Card>

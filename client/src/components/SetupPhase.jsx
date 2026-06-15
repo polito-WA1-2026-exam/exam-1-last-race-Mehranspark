@@ -1,12 +1,12 @@
-// Setup phase: show the FULL network map (stations, lines, connections), then let
-// the player start. Fetching the full network is a GET, so it is safe to run in a
-// useEffect; the game itself is created only when the player clicks the button
-// (a user action, never in an effect — that avoids creating duplicate games under
-// React StrictMode's double-invocation in development).
+// Setup phase: show the FULL network map (stations + coloured lines), a legend,
+// and a button to begin. The full network is a GET (safe in an effect); the game
+// is created only on the button click (a user action) so StrictMode can't make
+// duplicate games.
 
 import { useState, useEffect } from "react";
-import { Card, Button, Alert, Spinner, Badge } from "react-bootstrap";
+import { Card, Button, Alert, Spinner } from "react-bootstrap";
 import API from "../API.js";
+import NetworkMap from "./NetworkMap.jsx";
 
 function SetupPhase({ onReady }) {
   const [network, setNetwork] = useState(null);
@@ -22,7 +22,7 @@ function SetupPhase({ onReady }) {
   const handleStart = async () => {
     setStarting(true);
     try {
-      await onReady(); // parent creates the game and switches phase
+      await onReady();
     } catch (e) {
       setError(e.message);
       setStarting(false);
@@ -30,37 +30,38 @@ function SetupPhase({ onReady }) {
   };
 
   if (error) return <Alert variant="danger">{error}</Alert>;
-  if (!network) return <Spinner animation="border" />;
+  if (!network)
+    return (
+      <div className="text-center py-5">
+        <Spinner animation="border" />
+      </div>
+    );
 
   return (
-    <Card className="shadow-sm">
+    <Card>
       <Card.Body>
-        <Card.Title as="h2">Setup — study the network</Card.Title>
-        <Card.Text className="text-muted">
-          Each line below lists its stations in order. Stations on more than one line are
-          interchanges — the only places you may switch lines. Study the map, then start:
-          the lines will be hidden during planning.
-        </Card.Text>
+        <h2>Study the network 🗺️</h2>
+        <p className="text-muted">
+          Memorise the lines and the interchange stations (the bigger white dots, where lines
+          meet). During planning the lines disappear — you'll rebuild them from memory.
+        </p>
 
-        {network.map((line) => (
-          <div key={line.id} className="mb-3">
-            <h5>
-              <Badge style={{ backgroundColor: line.color }}>{line.name}</Badge>
-            </h5>
-            <div>
-              {line.stations.map((s, i) => (
-                <span key={s.id}>
-                  {i > 0 && <span className="text-muted"> — </span>}
-                  {s.name}
-                </span>
-              ))}
-            </div>
-          </div>
-        ))}
+        <div className="lr-legend mb-2">
+          {network.map((line) => (
+            <span className="sw" key={line.id}>
+              <i style={{ background: line.color }} />
+              {line.name}
+            </span>
+          ))}
+        </div>
 
-        <Button variant="primary" size="lg" onClick={handleStart} disabled={starting}>
-          {starting ? "Starting…" : "I'm ready — start planning"}
-        </Button>
+        <NetworkMap lines={network} />
+
+        <div className="text-center mt-3">
+          <Button variant="primary" size="lg" onClick={handleStart} disabled={starting}>
+            {starting ? "Starting…" : "I'm ready — start planning →"}
+          </Button>
+        </div>
       </Card.Body>
     </Card>
   );

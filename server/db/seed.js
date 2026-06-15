@@ -23,6 +23,25 @@ const LINES = [
   { name: "Saffron Line", color: "#E0A800", stations: ["Nimbus Fields", "Obsidian Court", "Mistral Heights", "Glasshouse", "Solace Gardens"] },
 ];
 
+// --- Station coordinates for the map drawing (viewBox ~ 800 x 680). ---
+// Meridian Cross is the central hub (on 3 lines); the four lines radiate from it.
+const COORDS = {
+  "Aurora Centrale": { x: 110, y: 250 },
+  "Ember Quay": { x: 265, y: 290 },
+  "Meridian Cross": { x: 420, y: 330 },
+  Irongate: { x: 565, y: 300 },
+  "Lumen Park": { x: 710, y: 250 },
+  Saltmarket: { x: 235, y: 110 },
+  "Halcyon Bay": { x: 545, y: 470 },
+  "Nimbus Fields": { x: 615, y: 590 },
+  "Verdant Hollow": { x: 625, y: 160 },
+  "Obsidian Court": { x: 440, y: 500 },
+  Thornwood: { x: 405, y: 635 },
+  "Mistral Heights": { x: 295, y: 530 },
+  Glasshouse: { x: 185, y: 590 },
+  "Solace Gardens": { x: 105, y: 645 },
+};
+
 // --- 2. Events (>=8, effects in [-4, +4]) ---
 const EVENTS = [
   { description: "Quiet journey — nothing happens.", effect: 0 },
@@ -65,7 +84,13 @@ async function seed() {
 
   const stationId = new Map(); // name -> id
   for (const name of stationNames) {
-    const { lastID } = await dbRun("INSERT INTO stations (name) VALUES (?)", [name]);
+    const pos = COORDS[name];
+    if (!pos) throw new Error(`Missing coordinates for station "${name}"`);
+    const { lastID } = await dbRun("INSERT INTO stations (name, x, y) VALUES (?, ?, ?)", [
+      name,
+      pos.x,
+      pos.y,
+    ]);
     stationId.set(name, lastID);
   }
 
