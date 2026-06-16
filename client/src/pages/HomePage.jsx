@@ -14,20 +14,18 @@ import API from "../API.js";
 
 // Presentation metadata for each step (paired to the server paragraphs by index).
 const STEP_META = [
-  { ic: "🚇", title: "The mission" },
-  { ic: "⏱️", title: "Beat the clock" },
-  { ic: "✅", title: "Build a valid route" },
-  { ic: "🎲", title: "Ride the chaos" },
-  { ic: "🏆", title: "Top the ranking" },
+  { ic: "🎯", title: "Goal" },
+  { ic: "⏱️", title: "Plan" },
+  { ic: "🧭", title: "Rules" },
+  { ic: "🎲", title: "Events" },
+  { ic: "🏆", title: "Ranking" },
 ];
 
-const PILLS = ["🗺️ Hidden metro map", "⏱️ 90-second sprint", "🎲 Random events", "🏆 Global ranking"];
-
 const STATS = [
-  { v: "90s", l: "to plan your route" },
-  { v: "20", l: "coins to start" },
-  { v: "±4", l: "coins per event" },
-  { v: "∞", l: "games to climb" },
+  { v: "90s", l: "to plan" },
+  { v: "20", l: "starting coins" },
+  { v: "±4", l: "per event" },
+  { v: "∞", l: "replays" },
 ];
 
 function HomePage() {
@@ -46,19 +44,7 @@ function HomePage() {
       {/* hero */}
       <div className="lr-hero">
         <h1>Last Race</h1>
-        <p className="lr-sub">
-          You've got <strong>90 seconds</strong> and a network you can't fully see. Memorise the
-          lines, plan the smartest route, and survive the unexpected — the rider with the most
-          coins wins.
-        </p>
-
-        <div className="lr-pills">
-          {PILLS.map((p, i) => (
-            <span className="lr-pill" key={p} style={{ animationDelay: `${0.1 + i * 0.08}s` }}>
-              {p}
-            </span>
-          ))}
-        </div>
+        <p className="lr-sub">Plan a metro route before time runs out.</p>
 
         <div className="mt-4">
           {user ? (
@@ -91,30 +77,22 @@ function HomePage() {
       )}
 
       {instructions && (
-        <>
-          <div className="lr-steps">
-            {instructions.paragraphs.map((p, i) => {
-              const meta = STEP_META[i] ?? { ic: "•", title: "Step" };
-              return (
-                <div className="lr-step-card" key={i} style={{ animationDelay: `${0.1 + i * 0.1}s` }}>
-                  <div className="ic">{meta.ic}</div>
-                  <div>
-                    <div className="num">STEP {String(i + 1).padStart(2, "0")}</div>
-                    <h5>{meta.title}</h5>
-                    <p>{p}</p>
-                  </div>
-                  <span className="ghost">{i + 1}</span>
+        <div className="lr-steps">
+          {instructions.paragraphs.map((p, i) => {
+            const meta = STEP_META[i] ?? { ic: "•", title: "Step" };
+            return (
+              <div className="lr-step-card" key={i} style={{ animationDelay: `${0.1 + i * 0.1}s` }}>
+                <div className="ic">{meta.ic}</div>
+                <div>
+                  <div className="num">STEP {String(i + 1).padStart(2, "0")}</div>
+                  <h5>{meta.title}</h5>
+                  <p>{p}</p>
                 </div>
-              );
-            })}
-          </div>
-
-          {!user && (
-            <Alert variant="info" className="mt-4 mb-0 text-center">
-              Ready? <Link to="/login">Log in</Link> to start your first race and claim a spot on the ranking.
-            </Alert>
-          )}
-        </>
+                <span className="ghost">{i + 1}</span>
+              </div>
+            );
+          })}
+        </div>
       )}
     </Container>
   );

@@ -40,11 +40,11 @@ router.get("/network/planning", isLoggedIn, async (req, res) => {
 const INSTRUCTIONS = {
   title: "How to play Last Race",
   paragraphs: [
-    "Last Race is a single-player game on a fictional underground network. Each game starts with 20 coins.",
-    "You are given a random start and destination station, at least 3 segments apart. You have 90 seconds to study the list of station-to-station segments, rebuild the network in your head, and select a sequence of segments forming a valid route from start to destination.",
-    "A route is valid if it begins and ends at the assigned stations, every step connects to the next, you change lines only at interchange stations, and you never reuse the same segment twice.",
-    "When you submit, each segment of your journey triggers a random event that adds or removes coins. Your final score is the coins you have left (never below zero). An invalid or incomplete route scores zero.",
-    "Log in to play and to appear on the global ranking of best scores.",
+    "Each game starts with 20 coins.",
+    "You have 90 seconds to plan a route from your start to your destination.",
+    "Pick connected segments in order. Change line only at interchanges. No segment twice.",
+    "Each segment gives a random event that changes your coins. An invalid route scores 0.",
+    "Your best score is shown in the ranking.",
   ],
 };
 
