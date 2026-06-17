@@ -16,30 +16,32 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // --- 1. Network definition (the single source of truth) ---
 // Each line lists its stations in physical order. Shared stations create
 // interchanges automatically.
+// Station names are real Torino Metro (Line 1) stops. The lines themselves are
+// fictional (the game needs >= 4 lines; Torino has one) and stay colour-themed.
 const LINES = [
-  { name: "Amber Line",   color: "#C75B12", stations: ["Aurora Centrale", "Ember Quay", "Meridian Cross", "Irongate", "Lumen Park"] },
-  { name: "Cobalt Line",  color: "#1F4E79", stations: ["Aurora Centrale", "Saltmarket", "Meridian Cross", "Halcyon Bay", "Nimbus Fields"] },
-  { name: "Verde Line",   color: "#2E7D32", stations: ["Lumen Park", "Verdant Hollow", "Meridian Cross", "Obsidian Court", "Thornwood"] },
-  { name: "Saffron Line", color: "#E0A800", stations: ["Nimbus Fields", "Obsidian Court", "Mistral Heights", "Glasshouse", "Solace Gardens"] },
+  { name: "Amber Line",   color: "#C75B12", stations: ["Porta Susa", "Bernini", "Porta Nuova", "Re Umberto", "Marconi"] },
+  { name: "Cobalt Line",  color: "#1F4E79", stations: ["Porta Susa", "Massaua", "Porta Nuova", "Pozzo Strada", "Fermi"] },
+  { name: "Verde Line",   color: "#2E7D32", stations: ["Marconi", "Dante", "Porta Nuova", "Lingotto", "Bengasi"] },
+  { name: "Saffron Line", color: "#E0A800", stations: ["Fermi", "Lingotto", "Nizza", "Paradiso", "Italia 61"] },
 ];
 
 // --- Station coordinates for the map drawing (viewBox ~ 800 x 680). ---
 // Meridian Cross is the central hub (on 3 lines); the four lines radiate from it.
 const COORDS = {
-  "Aurora Centrale": { x: 110, y: 250 },
-  "Ember Quay": { x: 265, y: 290 },
-  "Meridian Cross": { x: 420, y: 330 },
-  Irongate: { x: 565, y: 300 },
-  "Lumen Park": { x: 710, y: 250 },
-  Saltmarket: { x: 235, y: 110 },
-  "Halcyon Bay": { x: 545, y: 470 },
-  "Nimbus Fields": { x: 615, y: 590 },
-  "Verdant Hollow": { x: 625, y: 160 },
-  "Obsidian Court": { x: 440, y: 500 },
-  Thornwood: { x: 405, y: 635 },
-  "Mistral Heights": { x: 295, y: 530 },
-  Glasshouse: { x: 185, y: 590 },
-  "Solace Gardens": { x: 105, y: 645 },
+  "Porta Susa": { x: 110, y: 250 },
+  Bernini: { x: 265, y: 290 },
+  "Porta Nuova": { x: 420, y: 330 },
+  "Re Umberto": { x: 565, y: 300 },
+  Marconi: { x: 710, y: 250 },
+  Massaua: { x: 235, y: 110 },
+  "Pozzo Strada": { x: 545, y: 470 },
+  Fermi: { x: 615, y: 590 },
+  Dante: { x: 625, y: 160 },
+  Lingotto: { x: 440, y: 500 },
+  Bengasi: { x: 405, y: 635 },
+  Nizza: { x: 295, y: 530 },
+  Paradiso: { x: 185, y: 590 },
+  "Italia 61": { x: 105, y: 645 },
 };
 
 // --- 2. Events (>=8, effects in [-4, +4]) ---
@@ -66,10 +68,10 @@ const USERS = [
 // --- 4. Pre-played games for the ranking (>=2 users with completed games). ---
 // start/dest are station names resolved to ids during seeding.
 const SEED_GAMES = [
-  { username: "alice", start: "Aurora Centrale", dest: "Lumen Park",   score: 24, status: "completed" },
-  { username: "alice", start: "Solace Gardens",  dest: "Aurora Centrale", score: 17, status: "completed" },
-  { username: "bob",   start: "Thornwood",       dest: "Aurora Centrale", score: 19, status: "completed" },
-  { username: "bob",   start: "Nimbus Fields",   dest: "Ember Quay",    score: 0,  status: "failed" },
+  { username: "alice", start: "Porta Susa",  dest: "Marconi",     score: 24, status: "completed" },
+  { username: "alice", start: "Italia 61",   dest: "Porta Susa",  score: 17, status: "completed" },
+  { username: "bob",   start: "Bengasi",     dest: "Porta Susa",  score: 19, status: "completed" },
+  { username: "bob",   start: "Fermi",       dest: "Bernini",     score: 0,  status: "failed" },
 ];
 
 async function seed() {
