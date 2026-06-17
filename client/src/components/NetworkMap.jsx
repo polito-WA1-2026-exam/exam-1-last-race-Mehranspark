@@ -17,7 +17,7 @@ const VIEW_H = 700;
 // `routePath` is the ordered list of station ids the player has built so far
 // (their OWN selected route — not the hidden network). `currentId` is where the
 // route currently ends. We draw that path on the map and pulse the current stop.
-function NetworkMap({ lines, stations, startId, destId, routePath = [], currentId }) {
+function NetworkMap({ lines, stations, startId, destId, routePath = [], currentId, onStationClick }) {
   const routeSet = useMemo(() => new Set(routePath), [routePath]);
 
   // Build the unique node list (+ interchange flag) from whichever input we got.
@@ -81,7 +81,11 @@ function NetworkMap({ lines, stations, startId, destId, routePath = [], currentI
         const highlighted = n.id === startId || n.id === destId || routeSet.has(n.id);
         const r = n.id === startId || n.id === destId ? 11 : n.lineCount > 1 ? 9 : 6.5;
         return (
-          <g key={n.id}>
+          <g
+            key={n.id}
+            className={onStationClick ? "node-clickable" : undefined}
+            onClick={onStationClick ? () => onStationClick(n.id) : undefined}
+          >
             {/* pulsing ring on the station the route currently ends at */}
             {n.id === currentId && (
               <circle className="node-current" cx={n.x} cy={n.y} r={13} fill="none" />
@@ -99,6 +103,10 @@ function NetworkMap({ lines, stations, startId, destId, routePath = [], currentI
               style={highlighted ? { fill: "#fff" } : undefined}>
               {n.name}
             </text>
+            {/* larger transparent hit area so the small dots are easy to click */}
+            {onStationClick && (
+              <circle className="node-hit" cx={n.x} cy={n.y} r={18} fill="transparent" />
+            )}
           </g>
         );
       })}

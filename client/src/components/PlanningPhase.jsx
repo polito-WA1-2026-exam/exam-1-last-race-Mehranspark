@@ -1,8 +1,13 @@
 // Planning phase: the timed route-builder.
 //
-// The player sees the stations positioned on the map (NO lines) and the flat list
-// of segments as chips. A 90-second ring counts down; at zero the route built so
-// far is auto-submitted. Each segment may be picked once, in sequence.
+// The player sees the stations on the map (NO lines) and the full list of
+// segments. They build a route by either clicking stations on the map or
+// clicking a segment in the list — in both cases a pick is only accepted if it
+// connects to where the route currently ends, so the route can never desync from
+// the selection. A 90s ring counts down and auto-submits the route built so far.
+//
+// (Spec-faithful: stations-only map, full segment list shown, segments selected
+// in sequence, lines hidden. The server is still the authority on validity.)
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Card, Button, Alert, Spinner, Row, Col } from "react-bootstrap";
@@ -15,10 +20,11 @@ function PlanningPhase({ game, onSubmitted }) {
   const [selected, setSelected] = useState([]); // ordered segment ids
   const [timeLeft, setTimeLeft] = useState(game.planningSeconds);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState(null); // fetch/submit error
+  const [reject, setReject] = useState(null); // transient "can't add that" hint
 
-  const submittedRef = useRef(false); // submit at most once
-  const selectedRef = useRef(selected); // latest selection for the timer's auto-submit
+  const submittedRef = useRef(false);
+  const selectedRef = useRef(selected);
   useEffect(() => {
     selectedRef.current = selected;
   }, [selected]);
@@ -43,46 +49,78 @@ function PlanningPhase({ game, onSubmitted }) {
     }
   }, [game.id, onSubmitted]);
 
-  // One interval for the whole phase; cleared on unmount.
   useEffect(() => {
     const id = setInterval(() => setTimeLeft((t) => (t > 0 ? t - 1 : 0)), 1000);
     return () => clearInterval(id);
   }, []);
 
-  // Auto-submit when the clock hits zero.
   useEffect(() => {
     if (timeLeft === 0) handleSubmit();
   }, [timeLeft, handleSubmit]);
 
-  const segById = useMemo(
-    () => new Map((data?.segments ?? []).map((s) => [s.id, s])),
+  const segById = useMemo(() => new Map((data?.segments ?? []).map((s) => [s.id, s])), [data]);
+  const nameById = useMemo(
+    () => new Map((data?.stations ?? []).map((s) => [s.id, s.name])),
     [data]
   );
+  const usedIds = useMemo(() => new Set(selected), [selected]);
 
-  // Reconstruct the directed walk from the selected segments (names + ids + state).
+  // The route is always a connected walk (we only ever append connecting
+  // segments), so reconstruction can't break.
   const path = useMemo(() => {
-    if (!data) return { names: [], ids: [game.start.id], currentId: game.start.id, broken: false };
     let currentId = game.start.id;
     const names = [game.start.name];
     const ids = [game.start.id];
-    let broken = false;
     for (const id of selected) {
       const seg = segById.get(id);
-      if (!seg) { broken = true; break; }
-      if (seg.stationA.id === currentId) { names.push(seg.stationB.name); currentId = seg.stationB.id; }
-      else if (seg.stationB.id === currentId) { names.push(seg.stationA.name); currentId = seg.stationA.id; }
-      else { broken = true; break; }
-      ids.push(currentId);
+      if (!seg) break;
+      const next = seg.stationA.id === currentId ? seg.stationB.id : seg.stationA.id;
+      currentId = next;
+      names.push(nameById.get(next));
+      ids.push(next);
     }
-    return { names, ids, currentId, broken };
-  }, [selected, segById, data, game.start]);
+    return { names, ids, currentId };
+  }, [selected, segById, nameById, game.start]);
 
-  const usedIds = useMemo(() => new Set(selected), [selected]);
-  const reachedDest = !path.broken && path.currentId === game.dest.id;
+  const reachedDest = path.currentId === game.dest.id;
+  const currentName = path.names[path.names.length - 1];
 
-  const addSegment = (id) => { if (!usedIds.has(id) && !submitting) setSelected((p) => [...p, id]); };
-  const undo = () => setSelected((p) => p.slice(0, -1));
-  const clear = () => setSelected([]);
+  // Append the (unused) segment between the current station and `targetId`.
+  const goToStation = (targetId) => {
+    if (submitting || targetId === path.currentId) return;
+    const seg = data.segments.find(
+      (s) =>
+        !usedIds.has(s.id) &&
+        ((s.stationA.id === path.currentId && s.stationB.id === targetId) ||
+          (s.stationB.id === path.currentId && s.stationA.id === targetId))
+    );
+    if (seg) {
+      setSelected((p) => [...p, seg.id]);
+      setReject(null);
+    } else {
+      setReject(`No segment from ${currentName} to ${nameById.get(targetId)}.`);
+    }
+  };
+
+  // Click a segment in the list: accept only if it connects to the current stop.
+  const pickSegment = (seg) => {
+    if (submitting || usedIds.has(seg.id)) return;
+    if (seg.stationA.id === path.currentId || seg.stationB.id === path.currentId) {
+      setSelected((p) => [...p, seg.id]);
+      setReject(null);
+    } else {
+      setReject(`That segment doesn't start at ${currentName}.`);
+    }
+  };
+
+  const undo = () => {
+    setSelected((p) => p.slice(0, -1));
+    setReject(null);
+  };
+  const clear = () => {
+    setSelected([]);
+    setReject(null);
+  };
 
   if (error) return <Alert variant="danger">{error}</Alert>;
   if (!data) return <div className="text-center py-5"><Spinner animation="border" /></div>;
@@ -116,10 +154,10 @@ function PlanningPhase({ game, onSubmitted }) {
               destId={game.dest.id}
               routePath={path.ids}
               currentId={path.currentId}
+              onStationClick={goToStation}
             />
           </Col>
           <Col lg={5}>
-            {/* the route being built */}
             <div className="lr-panel p-3 mb-3">
               <div className="text-muted small mb-1">Your route</div>
               <div className="lr-route">
@@ -130,14 +168,12 @@ function PlanningPhase({ game, onSubmitted }) {
                   </span>
                 ))}
               </div>
-              {!path.broken && !reachedDest && (
-                <div className="mt-2 small" style={{ color: "var(--accent-2)" }}>
-                  📍 You're at <strong>{path.names[path.names.length - 1]}</strong> — pick a segment that starts here.
-                </div>
+              {reject && (
+                <div className="mt-2" style={{ color: "var(--danger)" }}>⚠ {reject}</div>
               )}
-              {path.broken && (
-                <div className="mt-2" style={{ color: "var(--danger)" }}>
-                  ⚠ That segment doesn't connect here.
+              {!reject && !reachedDest && (
+                <div className="mt-2 small" style={{ color: "var(--accent-2)" }}>
+                  📍 You're at <strong>{currentName}</strong> — tap a neighbouring station, or pick a segment below.
                 </div>
               )}
               {reachedDest && (
@@ -162,14 +198,14 @@ function PlanningPhase({ game, onSubmitted }) {
         </Row>
 
         <div className="text-muted small mt-2 mb-1">
-          Pick segments in order (each once). The lines are hidden — rebuild them from memory.
+          Tap stations on the map to build your route, or pick a segment below. The lines are hidden — rebuild them from memory.
         </div>
         <div className="lr-chips">
           {data.segments.map((s) => (
             <span
               key={s.id}
               className={`lr-chip ${usedIds.has(s.id) ? "used" : ""}`}
-              onClick={() => addSegment(s.id)}
+              onClick={() => pickSegment(s)}
             >
               {s.stationA.name} — {s.stationB.name}
             </span>

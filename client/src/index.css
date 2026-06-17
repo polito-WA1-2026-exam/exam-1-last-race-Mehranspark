@@ -203,6 +203,9 @@ a { color: var(--accent-2); }
    =========================================================================== */
 .lr-map { width: 100%; height: auto; display: block; }
 .lr-map .station-dot { transition: r 0.2s ease, filter 0.2s ease; }
+.lr-map .node-clickable { cursor: pointer; }
+.lr-map .node-clickable:hover .station-dot { filter: drop-shadow(0 0 8px #fff); }
+.lr-map .node-clickable:hover .station-label { fill: #fff; }
 .lr-map .station-label { fill: var(--text); font-size: 13px; font-weight: 600; paint-order: stroke; stroke: rgba(7,11,22,0.85); stroke-width: 3px; }
 .lr-map .line-path { fill: none; stroke-linecap: round; stroke-linejoin: round; opacity: 0.95;
   stroke-dasharray: 1400; stroke-dashoffset: 1400; animation: draw 1.6s ease forwards; }
