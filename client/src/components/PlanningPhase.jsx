@@ -22,7 +22,6 @@ function PlanningPhase({ game, onSubmitted }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null); // fetch/submit error
   const [reject, setReject] = useState(null); // transient "can't add that" hint
-  const [fromHere, setFromHere] = useState(false); // show only segments from current stop
 
   const submittedRef = useRef(false);
   const selectedRef = useRef(selected);
@@ -86,14 +85,7 @@ function PlanningPhase({ game, onSubmitted }) {
   const reachedDest = path.currentId === game.dest.id;
   const currentName = path.names[path.names.length - 1];
 
-  // Optionally narrow the (always fully-listed) segments to those leaving the
-  // current stop. This only helps locate entries — every segment is already shown
-  // by default, so nothing the spec mandates is hidden.
-  const shownSegments = fromHere
-    ? (data?.segments ?? []).filter(
-        (s) => s.stationA.id === path.currentId || s.stationB.id === path.currentId
-      )
-    : data?.segments ?? [];
+  const shownSegments = data?.segments ?? [];
 
   // Append the (unused) segment between the current station and `targetId`.
   const goToStation = (targetId) => {
@@ -205,29 +197,12 @@ function PlanningPhase({ game, onSubmitted }) {
               </Button>
             </div>
 
-            {/* segment list — a single column of "from → to" rows, under the route.
-               The full list is shown by default; "From here" just narrows it. */}
-            <div className="d-flex align-items-center gap-2 mb-1 flex-wrap">
-              <span className="text-muted small">
-                Segments ({shownSegments.length}/{data.segments.length})
-              </span>
-              <Button
-                size="sm"
-                variant={fromHere ? "primary" : "outline-light"}
-                className="ms-auto"
-                onClick={() => setFromHere((v) => !v)}
-              >
-                📍 {fromHere ? "From here ✓" : "From here"}
-              </Button>
-            </div>
+            {/* segment list — a single column of "from → to" rows, under the route */}
             <div className="text-muted small mb-2">
-              Tap a segment that starts at <strong>{currentName}</strong> (or tap a station on the map).
+              Segments — tap one that starts at <strong>{currentName}</strong>, or tap a station on the map.
             </div>
 
             <div className="lr-seglist">
-              {shownSegments.length === 0 && (
-                <span className="text-muted small">No segments left from here.</span>
-              )}
               {shownSegments.map((s) => {
                 const used = usedIds.has(s.id);
                 // show the arrow pointing in the direction you'd travel from the
