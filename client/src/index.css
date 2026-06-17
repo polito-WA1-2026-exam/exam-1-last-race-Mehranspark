@@ -249,6 +249,22 @@ a { color: var(--accent-2); }
 .lr-chip.used { opacity: 0.35; cursor: default; text-decoration: line-through; }
 .lr-chip.used:hover { transform: none; box-shadow: none; border-color: var(--border-strong); }
 
+/* single-column segment list ("from → to" rows) */
+.lr-seglist { display: flex; flex-direction: column; gap: 0.4rem; max-height: 430px; overflow-y: auto; padding-right: 0.3rem; }
+.lr-seglist::-webkit-scrollbar { width: 8px; }
+.lr-seglist::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.12); border-radius: 8px; }
+.lr-seg-row {
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 0.5rem;
+  padding: 0.5rem 0.8rem; border: 1px solid var(--border-strong); border-radius: 10px;
+  background: var(--surface-2); color: var(--text); cursor: pointer; transition: all 0.14s ease;
+}
+.lr-seg-row:hover { border-color: var(--accent); transform: translateX(3px); box-shadow: 0 6px 16px -10px var(--accent); }
+.lr-seg-row .s { font-size: 0.9rem; font-weight: 600; }
+.lr-seg-row .s:first-child { text-align: right; }
+.lr-seg-row .arrow { color: var(--accent-2); font-weight: 700; }
+.lr-seg-row.used { opacity: 0.4; text-decoration: line-through; cursor: default; }
+.lr-seg-row.used:hover { transform: none; box-shadow: none; border-color: var(--border-strong); }
+
 /* route ribbon */
 .lr-route { display: flex; align-items: center; flex-wrap: wrap; gap: 0.35rem; font-weight: 600; }
 .lr-route .stop { background: var(--surface-2); border: 1px solid var(--border); padding: 0.15rem 0.6rem; border-radius: 8px; animation: pop 0.25s ease both; }

@@ -22,7 +22,7 @@ function PlanningPhase({ game, onSubmitted }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null); // fetch/submit error
   const [reject, setReject] = useState(null); // transient "can't add that" hint
-  const [filter, setFilter] = useState(""); // search text over the segment list
+  const [fromHere, setFromHere] = useState(false); // show only segments from current stop
 
   const submittedRef = useRef(false);
   const selectedRef = useRef(selected);
@@ -86,12 +86,14 @@ function PlanningPhase({ game, onSubmitted }) {
   const reachedDest = path.currentId === game.dest.id;
   const currentName = path.names[path.names.length - 1];
 
-  // Filter the (always fully-listed) segments by the search text. This only helps
-  // locate entries in the list — it reveals nothing the required list doesn't.
-  const q = filter.trim().toLowerCase();
-  const shownSegments = (data?.segments ?? []).filter(
-    (s) => !q || `${s.stationA.name} ${s.stationB.name}`.toLowerCase().includes(q)
-  );
+  // Optionally narrow the (always fully-listed) segments to those leaving the
+  // current stop. This only helps locate entries — every segment is already shown
+  // by default, so nothing the spec mandates is hidden.
+  const shownSegments = fromHere
+    ? (data?.segments ?? []).filter(
+        (s) => s.stationA.id === path.currentId || s.stationB.id === path.currentId
+      )
+    : data?.segments ?? [];
 
   // Append the (unused) segment between the current station and `targetId`.
   const goToStation = (targetId) => {
@@ -202,49 +204,52 @@ function PlanningPhase({ game, onSubmitted }) {
                 Clear
               </Button>
             </div>
+
+            {/* segment list — a single column of "from → to" rows, under the route.
+               The full list is shown by default; "From here" just narrows it. */}
+            <div className="d-flex align-items-center gap-2 mb-1 flex-wrap">
+              <span className="text-muted small">
+                Segments ({shownSegments.length}/{data.segments.length})
+              </span>
+              <Button
+                size="sm"
+                variant={fromHere ? "primary" : "outline-light"}
+                className="ms-auto"
+                onClick={() => setFromHere((v) => !v)}
+              >
+                📍 {fromHere ? "From here ✓" : "From here"}
+              </Button>
+            </div>
+            <div className="text-muted small mb-2">
+              Tap a segment that starts at <strong>{currentName}</strong> (or tap a station on the map).
+            </div>
+
+            <div className="lr-seglist">
+              {shownSegments.length === 0 && (
+                <span className="text-muted small">No segments left from here.</span>
+              )}
+              {shownSegments.map((s) => {
+                const used = usedIds.has(s.id);
+                // show the arrow pointing in the direction you'd travel from the
+                // current stop (purely visual; picking works either way)
+                const fromCurrent = s.stationB.id === path.currentId;
+                const a = fromCurrent ? s.stationB : s.stationA;
+                const b = fromCurrent ? s.stationA : s.stationB;
+                return (
+                  <div
+                    key={s.id}
+                    className={`lr-seg-row ${used ? "used" : ""}`}
+                    onClick={() => pickSegment(s)}
+                  >
+                    <span className="s">{a.name}</span>
+                    <span className="arrow">→</span>
+                    <span className="s">{b.name}</span>
+                  </div>
+                );
+              })}
+            </div>
           </Col>
         </Row>
-
-        <div className="text-muted small mt-3 mb-2">
-          Tap a station on the map, or pick a segment below. The lines are hidden — use the search to find your way.
-        </div>
-
-        {/* search / filter over the full segment list (helps locate, reveals nothing new) */}
-        <div className="d-flex align-items-center gap-2 mb-2 flex-wrap">
-          <input
-            className="form-control form-control-sm"
-            style={{ maxWidth: 260 }}
-            placeholder="🔎 Search a station…"
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-          />
-          <Button size="sm" variant="outline-light" onClick={() => setFilter(currentName)}>
-            📍 From {currentName}
-          </Button>
-          {filter && (
-            <Button size="sm" variant="outline-secondary" onClick={() => setFilter("")}>
-              Clear
-            </Button>
-          )}
-          <span className="text-muted small ms-auto">
-            {shownSegments.length} / {data.segments.length} segments
-          </span>
-        </div>
-
-        <div className="lr-chips">
-          {shownSegments.length === 0 && (
-            <span className="text-muted small">No segments match “{filter}”.</span>
-          )}
-          {shownSegments.map((s) => (
-            <span
-              key={s.id}
-              className={`lr-chip ${usedIds.has(s.id) ? "used" : ""}`}
-              onClick={() => pickSegment(s)}
-            >
-              {s.stationA.name} — {s.stationB.name}
-            </span>
-          ))}
-        </div>
       </Card.Body>
     </Card>
   );
