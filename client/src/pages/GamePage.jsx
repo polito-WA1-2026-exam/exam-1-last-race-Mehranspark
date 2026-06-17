@@ -2,13 +2,14 @@
 // phase is a separate component. The game is created (a POST) only when the player
 // finishes Setup — never inside an effect — so StrictMode can't create duplicates.
 //
-// Phases: 'setup' -> 'planning' -> 'execution' -> 'result'.
+// Phases: 'setup' -> 'countdown' -> 'planning' -> 'execution' -> 'result'.
 // A valid route is replayed in 'execution'; an invalid one skips straight to
 // 'result' (the player simply lost all coins).
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Container, Alert } from "react-bootstrap";
 import SetupPhase from "../components/SetupPhase.jsx";
+import CountdownOverlay from "../components/CountdownOverlay.jsx";
 import PlanningPhase from "../components/PlanningPhase.jsx";
 import ExecutionPhase from "../components/ExecutionPhase.jsx";
 import ResultView from "../components/ResultView.jsx";
@@ -18,15 +19,29 @@ function GamePage() {
   const [phase, setPhase] = useState("setup");
   const [game, setGame] = useState(null); // { id, start, dest, planningSeconds }
   const [result, setResult] = useState(null); // server's route outcome
+  const [countdownDone, setCountdownDone] = useState(false);
   const [error, setError] = useState(null);
 
-  // Called by SetupPhase when the player is ready: create the game, go to planning.
-  const startPlanning = async () => {
+  // Called by SetupPhase when the player is ready: show the countdown while the
+  // game is being created in parallel (so there's no pause after "Go!").
+  const startPlanning = () => {
     setError(null);
-    const newGame = await API.createGame();
-    setGame(newGame);
-    setPhase("planning");
+    setGame(null);
+    setCountdownDone(false);
+    setPhase("countdown");
+    API.createGame()
+      .then(setGame)
+      .catch((e) => {
+        setError(e.message);
+        setPhase("setup");
+      });
   };
+
+  // Move to planning only once BOTH the countdown has finished and the game is
+  // ready (whichever happens last).
+  useEffect(() => {
+    if (phase === "countdown" && countdownDone && game) setPhase("planning");
+  }, [phase, countdownDone, game]);
 
   // Called by PlanningPhase after the route is submitted and scored.
   // A valid route is animated in the execution phase; an invalid one goes
@@ -40,6 +55,7 @@ function GamePage() {
   const newGame = () => {
     setGame(null);
     setResult(null);
+    setCountdownDone(false);
     setPhase("setup");
   };
 
@@ -48,6 +64,7 @@ function GamePage() {
       {error && <Alert variant="danger">{error}</Alert>}
 
       {phase === "setup" && <SetupPhase onReady={startPlanning} />}
+      {phase === "countdown" && <CountdownOverlay onDone={() => setCountdownDone(true)} />}
       {phase === "planning" && game && (
         <PlanningPhase game={game} onSubmitted={handleSubmitted} />
       )}
