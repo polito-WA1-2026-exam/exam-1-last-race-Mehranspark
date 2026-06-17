@@ -207,6 +207,23 @@ a { color: var(--accent-2); }
 .lr-map .line-path { fill: none; stroke-linecap: round; stroke-linejoin: round; opacity: 0.95;
   stroke-dasharray: 1400; stroke-dashoffset: 1400; animation: draw 1.6s ease forwards; }
 @keyframes draw { to { stroke-dashoffset: 0; } }
+/* the player's own selected route, drawn over the stations */
+.lr-map .route-path {
+  stroke: var(--accent-2); stroke-width: 5; stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 0 6px var(--accent-2)); opacity: 0.95;
+  stroke-dasharray: 7 9; animation: routeDash 0.9s linear infinite;
+}
+@keyframes routeDash { to { stroke-dashoffset: -32; } }
+/* pulsing ring on the current end-of-route station ("you are here") */
+.lr-map .node-current {
+  stroke: var(--accent-2); stroke-width: 2.5;
+  transform-box: fill-box; transform-origin: center;
+  animation: ringPulse 1.4s ease-in-out infinite;
+}
+@keyframes ringPulse {
+  0%, 100% { opacity: 0.85; transform: scale(0.8); }
+  50%      { opacity: 0.15; transform: scale(1.6); }
+}
 .lr-map .node-start { filter: drop-shadow(0 0 8px var(--success)); }
 .lr-map .node-dest  { filter: drop-shadow(0 0 8px var(--danger)); }
 .lr-map .node-on-route { filter: drop-shadow(0 0 6px var(--accent-2)); }

@@ -114,7 +114,8 @@ function PlanningPhase({ game, onSubmitted }) {
               stations={data.stations}
               startId={game.start.id}
               destId={game.dest.id}
-              routeStationIds={path.ids}
+              routePath={path.ids}
+              currentId={path.currentId}
             />
           </Col>
           <Col lg={5}>
@@ -129,6 +130,11 @@ function PlanningPhase({ game, onSubmitted }) {
                   </span>
                 ))}
               </div>
+              {!path.broken && !reachedDest && (
+                <div className="mt-2 small" style={{ color: "var(--accent-2)" }}>
+                  📍 You're at <strong>{path.names[path.names.length - 1]}</strong> — pick a segment that starts here.
+                </div>
+              )}
               {path.broken && (
                 <div className="mt-2" style={{ color: "var(--danger)" }}>
                   ⚠ That segment doesn't connect here.
