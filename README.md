@@ -1,8 +1,6 @@
 # Exam #1: "Last Race"
 
-## Student: sXXXXXX NAZARI MEHRAN
-
-> Replace `sXXXXXX` with your student ID before submitting.
+## Student: s364600 NAZARIFAZEL MEHRAN
 
 A single-player web game on a fictional underground network. Each game assigns a
 random start and destination station (≥3 segments apart); the player has 90
@@ -99,6 +97,20 @@ During a game (planning phase):
 
 ## Use of AI Tools
 
-<!-- REQUIRED: describe whether and how AI tools were used, and how the output was
-verified/adapted (or state that no AI was used). Complete this section before
-submitting — it is your declaration. -->
+I used an AI coding assistant (Claude) while building this project. It was used to:
+
+- Scaffold the project structure (client/server split, initial files).
+- Draft parts of the Express API, the SQLite schema and seed data, and several
+  React components (the game phase machine, the SVG `NetworkMap`, the timer).
+- Help write and refine this `README.md`.
+
+How the output was used and verified:
+
+- I reviewed every file before keeping it and made changes where I disagreed with
+  the AI's choices or where it did not match the functional specification.
+- I ran the application end-to-end (login, planning timer, route validation,
+  execution events, ranking) to confirm the behaviour matches the spec.
+- I made sure I understand every route, query, validation rule, and component so I
+  can explain each design choice and line of code at the oral exam.
+
+No part of the submission was accepted without being read, tested, and understood.
